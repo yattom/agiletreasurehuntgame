@@ -59,28 +59,36 @@ class Search(object):
         self.dump = dump
         self._processed = {}
 
-    def search_single(self):
+    def start_dumper(self):
         if self.dump:
-            dumper = Dumper(self)
+            self.dumper = Dumper(self)
         else:
-            dumper = DumbDumper()
-        dumper.start()
-        best_score = 0
-        bests = []
-        for candidate in self.candidates():
-            dumper.cycle(candidate)
-            if candidate.is_final():
-                if candidate.score() > best_score:
-                    best_score = candidate.score()
-                    bests = []
-                if candidate.score() == best_score:
-                    bests.append(candidate)
-                    dumper.best(best_score, candidate)
-            else:
-                self.add_candiates(candidate.next_states())
-            self.add_processed(candidate)
+            self.dumper = DumbDumper()
+        self.dumper.start()
 
-        return bests
+    def reset_best(self):
+        self.best_score = 0
+        self.bests = []
+
+    def search_single(self):
+        self.start_dumper()
+        self.reset_best()
+        for candidate in self.candidates():
+            self.process_candidate(candidate)
+        return self.bests
+
+    def process_candidate(self, candidate):
+        self.dumper.cycle(candidate)
+        if candidate.is_final():
+            if candidate.score() > self.best_score:
+                self.best_score = candidate.score()
+                self.bests = []
+            if candidate.score() == self.best_score:
+                self.bests.append(candidate)
+                self.dumper.best(self.best_score, candidate)
+        else:
+            self.add_candiates(candidate.next_states())
+        self.add_processed(candidate)
 
     def candidates(self):
         while True:
