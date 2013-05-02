@@ -79,14 +79,7 @@ class Search(object):
 
     def process_candidate(self, candidate):
         self.dumper.cycle(candidate)
-        if candidate.is_final():
-            if candidate.score() > self.best_score:
-                self.best_score = candidate.score()
-                self.bests = []
-            if candidate.score() == self.best_score:
-                self.bests.append(candidate)
-                self.dumper.best(self.best_score, candidate)
-        else:
+        if not candidate.is_final():
             self.add_candiates(candidate.next_states())
         self.add_processed(candidate)
 
@@ -109,6 +102,13 @@ class Search(object):
         return True
 
     def add_processed(self, candidate):
+        if candidate.is_final():
+            if candidate.score() > self.best_score:
+                self.best_score = candidate.score()
+                self.bests = []
+            if candidate.score() == self.best_score:
+                self.bests.append(candidate)
+                self.dumper.best(self.best_score, candidate)
         if not candidate._normalized_id in self._processed:
             self._processed[candidate._normalized_id] = candidate.score()
         elif candidate.score() > self._processed[candidate._normalized_id]:
