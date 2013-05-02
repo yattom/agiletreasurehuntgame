@@ -367,6 +367,9 @@ class OthelloCandidate(object):
                     yield OthelloCandidate(self.place_limit, next_board)
 
 
+    def dump(self, **argv):
+        return self.board.dump(**argv)
+
     def __hash__(self):
         return hash(self._normalized_id)
 
@@ -390,11 +393,11 @@ class Dumper(object):
             now = datetime.datetime.now()
             print "#%05d elapsed:%s, candidates:%d, processed(normalized):%d, avg:%s, lap avg:%s"%(self.loop_count, now  - self.started, len(self.search.candidates_list), len(self.search._processed), (now - self.started) / self.loop_count, (now - self.lap) / Dumper.INTERVAL)
             self.lap = now
-            print candidate.board.dump()
+            print candidate.dump()
 
     def best(self, best_score, candidate):
         print 'current best(score=%d)'%(best_score)
-        print candidate.board.dump(history=True)
+        print candidate.dump(history=True)
 
 class DumbDumper(object):
     def start(self):
@@ -413,16 +416,16 @@ class Search(object):
     >>> search.add_candiates(start.next_states())
     >>> bests = search.search()
     >>> for b in bests:
-    ...    print b.board.dump()
+    ...    print b.board.dump(history=True)
     ('...',
      '...',
-     'BBB')
+     'BBB')(2, 1, 1)(2, 2, 2)(2, 0, 2)
     ('.B.',
      '.B.',
-     '.B.')
+     '.B.')(1, 1, 1)(2, 1, 2)(0, 1, 2)
     ('B..',
      '.B.',
-     '..B')
+     '..B')(1, 1, 1)(2, 2, 2)(0, 0, 2)
     '''
     def __init__(self, dump=False):
         self.candidates_list = bigheap.BigHeap(max_threshold=30000, min_threshold=10000)
@@ -506,7 +509,7 @@ def main():
     Dumper.INTERVAL = 1000
     search = Search(dump=True)
 #    search = SearchWithGenerator()
-    start = OthelloCandidate(6, Board(width=5, height=5))
+    start = OthelloCandidate(4, Board(width=3, height=3))
     search.add_candiates(start.next_states())
     bests = search.search()
     for b in bests:
