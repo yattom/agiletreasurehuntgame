@@ -3,4 +3,5 @@ Scripts/
 include/
 lib/
 man/
+dist/
 *.pyc

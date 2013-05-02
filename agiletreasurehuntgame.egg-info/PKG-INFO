@@ -1,0 +1,14 @@
+Metadata-Version: 1.1
+Name: agiletreasurehuntgame
+Version: 0.0
+Summary: agiletreasurehuntgame simulation
+Home-page: UNKNOWN
+Author: Yattom
+Author-email: tsutomu.yasui@gmail.com
+License: UNKNOWN
+Description: UNKNOWN
+Platform: UNKNOWN
+Requires: PyHamcrest(==1.7.1)
+Requires: distribute(==0.6.36)
+Requires: nose(==1.3.0)
+Requires: wsgiref(==0.1.2)
