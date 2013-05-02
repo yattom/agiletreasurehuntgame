@@ -90,6 +90,12 @@ class Search(object):
             candidate = self.candidates_list.pop()
             if not self.is_processed(candidate): yield candidate
 
+    def pop_candidate(self):
+        while True:
+            if len(self.candidates_list) == 0: return None
+            candidate = self.candidates_list.pop()
+            if not self.is_processed(candidate): return candidate
+
     def add_candiates(self, candidates):
         for c in candidates:
             self.candidates_list.append(c)
