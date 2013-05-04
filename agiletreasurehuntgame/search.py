@@ -26,7 +26,7 @@ class Dumper(object):
         print candidate.dump(history=True)
 
     def final_best(self, bests):
-        print 'final bests: score=%d'%(beses[0].score())
+        print 'final bests: score=%d'%(bests[0].score())
         for b in bests:
             print b.dump(history=True)
 
@@ -101,7 +101,7 @@ class Search(object):
     def pop_candidate(self):
         while True:
             if len(self.candidates_list) == 0:
-                dumper.final_best(self.bests)
+                self.dumper.final_best(self.bests)
                 return None
             candidate = self.candidates_list.pop()
             if not self.is_processed(candidate): return candidate
