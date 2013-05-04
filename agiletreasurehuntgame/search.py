@@ -92,7 +92,11 @@ class Search(object):
 
     def pop_candidate(self):
         while True:
-            if len(self.candidates_list) == 0: return None
+            if len(self.candidates_list) == 0:
+                print 'final bests:'
+                for b in self.bests:
+                    print b.dump(history=True)
+                return None
             candidate = self.candidates_list.pop()
             if not self.is_processed(candidate): return candidate
 
