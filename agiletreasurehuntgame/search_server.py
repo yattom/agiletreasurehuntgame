@@ -26,21 +26,16 @@ class SearchServer(object):
 
     class Candidates:
         def GET(self):
-            print 'Candidates.GET'
             return encode(SearchServer.search.pop_candidate())
 
         def POST(self):
-            print 'Candidates.POST'
             candidates = decode(context.env['wsgi.input'].read())
-            print 'candidates=%s'%(candidates)
             SearchServer.search.add_candiates(candidates)
             return ''
 
     class Processed:
         def POST(self):
-            print 'Processed.POST'
             processed = decode(context.env['wsgi.input'].read())
-            print 'processed=%s'%(processed)
             SearchServer.search.add_processed(processed)
             return ''
 

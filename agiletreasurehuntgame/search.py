@@ -25,6 +25,11 @@ class Dumper(object):
         print 'current best(score=%d)'%(best_score)
         print candidate.dump(history=True)
 
+    def final_best(self, bests):
+        print 'final bests: score=%d'%(beses[0].score())
+        for b in bests:
+            print b.dump(history=True)
+
 class DumbDumper(object):
     def start(self):
         pass
@@ -33,6 +38,9 @@ class DumbDumper(object):
         pass
 
     def best(self, best_score, candidate):
+        pass
+
+    def final_best(self, bests):
         pass
 
 class Search(object):
@@ -93,9 +101,7 @@ class Search(object):
     def pop_candidate(self):
         while True:
             if len(self.candidates_list) == 0:
-                print 'final bests:'
-                for b in self.bests:
-                    print b.dump(history=True)
+                dumper.final_best(self.bests)
                 return None
             candidate = self.candidates_list.pop()
             if not self.is_processed(candidate): return candidate
