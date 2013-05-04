@@ -4,6 +4,7 @@ import web
 from web.webapi import context
 import pickle
 import base64
+import urllib2
 
 from search import Search
 
@@ -26,16 +27,21 @@ class SearchServer(object):
 
     class Candidates:
         def GET(self):
+            print 'Candidates.GET'
             return encode(SearchServer.search.pop_candidate())
 
         def POST(self):
+            print 'Candidates.POST'
             candidates = decode(context.env['wsgi.input'].read())
+            print 'candidates=%s'%(candidates)
             SearchServer.search.add_candiates(candidates)
             return ''
 
     class Processed:
         def POST(self):
-            peocessed = decode(context.env['wsgi.input'].read())
+            print 'Processed.POST'
+            processed = decode(context.env['wsgi.input'].read())
+            print 'processed=%s'%(processed)
             SearchServer.search.add_processed(processed)
             return ''
 
@@ -46,24 +52,42 @@ class SearchServer(object):
         app.run()
 
 class SearchClient(object):
-    def __init__(self):
-        pass
+    def __init__(self, url):
+        self.url = url
 
     def search(self):
         for candidate in self.candidates():
             self.process_candidate(candidate)
 
     def process_candidate(self, candidate):
-        self.dumper.cycle(candidate)
         if not candidate.is_final():
             self.add_candiates(candidate.next_states())
         self.add_processed(candidate)
 
+    def candidates(self):
+        while True:
+            f = urllib2.urlopen(self.url + '/candidates')
+            candidate = decode(f.read())
+            print candidate
+            if not candidate: raise StopIteration
+            yield candidate
+
+    def add_processed(self, processed):
+        f = urllib2.urlopen(self.url + '/processed', data=encode(processed))
+        f.close()
+
+    def add_candiates(self, next_candidates):
+        data = encode(list(next_candidates))
+        f = urllib2.urlopen(self.url + '/candidates', data=data)
+        f.close()
+
 def main():
     import othello, search
     search = search.Search(dump=True)
-    start = othello.OthelloCandidate(4, othello.Board(width=3, height=3))
+    start = othello.OthelloCandidate(3, othello.Board(width=3, height=3))
     search.add_candiates(start.next_states())
+    search.reset_best()
+    search.start_dumper()
 
     SearchServer.run(search)
 
