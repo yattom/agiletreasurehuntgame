@@ -35,3 +35,9 @@ class SearchClient(object):
         f.close()
 
 
+def main():
+    client = SearchClient('http://localhost:8080')
+    client.search()
+
+if __name__=='__main__':
+    main()

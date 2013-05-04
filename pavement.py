@@ -32,3 +32,10 @@ def test(options):
     files = path('agiletreasurehuntgame').walk('*.py')
     sh('nosetests %s %s'%(' '.join(opts), ' '.join(files)))
 
+@task
+def server():
+    sh('python -m agiletreasurehuntgame.search_server')
+
+@task
+def client():
+    sh('python -m agiletreasurehuntgame.search_client')
