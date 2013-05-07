@@ -5,6 +5,7 @@ from web.webapi import context
 import pickle
 import base64
 import datetime
+import threading
 
 from search import Search
 
@@ -29,24 +30,41 @@ class SearchServer(object):
         def GET(self):
             if SearchServer.first_req == 0:
                 SearchServer.first_req = datetime.datetime.now()
+            SearchServer.search_lock.acquire()
             candidate = SearchServer.search.pop_candidate()
+            SearchServer.search_lock.release()
             if not candidate:
                 print 'elapsed: %s'%(datetime.datetime.now() - SearchServer.first_req)
             return encode(candidate)
 
         def POST(self):
             candidates = decode(context.env['wsgi.input'].read())
+            SearchServer.search_lock.acquire()
             SearchServer.search.add_candiates(candidates)
+            SearchServer.search_lock.release()
             return ''
 
     class Processed:
         def POST(self):
             processed = decode(context.env['wsgi.input'].read())
+            SearchServer.search_lock.acquire()
             SearchServer.search.add_processed(processed)
+            SearchServer.search_lock.release()
             return ''
 
     @classmethod
+    def init_semaphore(cls, dummy=False):
+        if dummy:
+            class DummySemaphore:
+                def acquire(self): pass
+                def release(self): pass
+            cls.search_lock = DummySemaphore()
+        else:
+            cls.search_lock = threading.Semaphore()
+
+    @classmethod
     def run(cls, search):
+        cls.init_semaphore(dummy=False)
         cls.search = search
         cls.first_req = 0
         app = web.application(SearchServer.urls, cls.__dict__, autoreload=True)
