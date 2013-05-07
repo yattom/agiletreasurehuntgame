@@ -6,8 +6,9 @@ import socket
 from search_server import encode, decode
 
 class SearchClient(object):
-    def __init__(self, url):
+    def __init__(self, url, batchsize):
         self.url = url
+        self.batchsize = batchsize
 
     def search(self):
         for candidates in self.candidate_lists():
@@ -27,7 +28,7 @@ class SearchClient(object):
     def candidate_lists(self):
         while True:
             try:
-                f = urllib2.urlopen(self.url + '/candidates?batch=100')
+                f = urllib2.urlopen(self.url + '/candidates?batch=%s'%(self.batchsize))
                 candidates = decode(f.read())
                 f.close()
                 if not candidates: raise StopIteration
@@ -52,8 +53,16 @@ class SearchClient(object):
             pass
 
 
+def parse_args():
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-b', '--batchsize', type=int, default=2)
+    return parser.parse_args()
+
 def main():
-    client = SearchClient('http://127.0.0.1:8080')
+    args = parse_args()
+    client = SearchClient('http://127.0.0.1:8080', batchsize=args.batchsize)
     client.search()
     print 'client search finished'
 

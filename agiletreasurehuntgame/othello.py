@@ -385,6 +385,8 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--depth', type=int, default=3)
     parser.add_argument('-s', '--size', type=int, default=3)
+    parser.add_argument('-b', '--batchsize', type=int, default=2)
+    parser.add_argument('-c', '--concurrency', type=int, default=1)
     return parser.parse_args()
 
 

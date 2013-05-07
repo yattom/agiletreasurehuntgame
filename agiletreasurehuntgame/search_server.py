@@ -90,7 +90,7 @@ def main():
     search.add_candiates(start.next_states())
     for candidate in search.candidates():
         search.process_candidate(candidate)
-        if len(search.candidates_list) > 400: break
+        if len(search.candidates_list) > args.concurrency * args.batchsize: break
 
     SearchServer.run(search)
 
