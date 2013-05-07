@@ -72,14 +72,10 @@ class SearchServer(object):
 
 
 def main():
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-d', '--depth', type=int, default=3)
-    parser.add_argument('-s', '--size', type=int, default=3)
-    args = parser.parse_args()
-
     import othello, search
+    args = othello.parse_args()
+    import sys
+    sys.argv[1] = '' # bypass ip arg in web/wsgi.py
     search = search.Search(dump=True)
     start = othello.OthelloCandidate(args.depth, othello.Board(width=args.size, height=args.size))
     search.add_candiates(start.next_states())

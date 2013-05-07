@@ -379,16 +379,19 @@ class OthelloCandidate(object):
         return -cmp(self._distance_sum, other._distance_sum)
 
 
-
-def main():
-    import datetime
+def parse_args():
     import argparse
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--depth', type=int, default=3)
     parser.add_argument('-s', '--size', type=int, default=3)
-    args = parser.parse_args()
+    return parser.parse_args()
 
+
+def main():
+    args = parse_args()
+
+    import datetime
     started = datetime.datetime.now()
     Dumper.INTERVAL = 1000
     search = Search(dump=True)
