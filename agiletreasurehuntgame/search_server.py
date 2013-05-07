@@ -30,12 +30,17 @@ class SearchServer(object):
         def GET(self):
             if SearchServer.first_req == 0:
                 SearchServer.first_req = datetime.datetime.now()
+            batch = int(web.webapi.input().batch) if 'batch' in web.webapi.input() else 10
             SearchServer.search_lock.acquire()
-            candidate = SearchServer.search.pop_candidate()
+            candidates = []
+            for i in range(batch):
+                c = SearchServer.search.pop_candidate()
+                if not c: break
+                candidates.append(c)
             SearchServer.search_lock.release()
-            if not candidate:
+            if not candidates:
                 print 'elapsed: %s'%(datetime.datetime.now() - SearchServer.first_req)
-            return encode(candidate)
+            return encode(candidates)
 
         def POST(self):
             candidates = decode(context.env['wsgi.input'].read())
@@ -48,7 +53,8 @@ class SearchServer(object):
         def POST(self):
             processed = decode(context.env['wsgi.input'].read())
             SearchServer.search_lock.acquire()
-            SearchServer.search.add_processed(processed)
+            for p in processed:
+                SearchServer.search.add_processed(p)
             SearchServer.search_lock.release()
             return ''
 
@@ -77,10 +83,14 @@ def main():
     import sys
     sys.argv[1] = '' # bypass ip arg in web/wsgi.py
     search = search.Search(dump=True)
-    start = othello.OthelloCandidate(args.depth, othello.Board(width=args.size, height=args.size))
-    search.add_candiates(start.next_states())
     search.reset_best()
     search.start_dumper()
+
+    start = othello.OthelloCandidate(args.depth, othello.Board(width=args.size, height=args.size))
+    search.add_candiates(start.next_states())
+    for candidate in search.candidates():
+        search.process_candidate(candidate)
+        if len(search.candidates_list) > 400: break
 
     SearchServer.run(search)
 

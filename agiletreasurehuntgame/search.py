@@ -26,6 +26,7 @@ class Dumper(object):
         print candidate.dump(history=True)
 
     def final_best(self, bests):
+        if not bests: return
         print 'final bests: score=%d'%(bests[0].score())
         for b in bests:
             print b.dump(history=True)

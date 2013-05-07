@@ -10,25 +10,31 @@ class SearchClient(object):
         self.url = url
 
     def search(self):
-        for candidate in self.candidates():
-            self.process_candidate(candidate)
+        for candidates in self.candidate_lists():
+            self.process_candidate(candidates)
 
-    def process_candidate(self, candidate):
-        if not candidate.is_final():
-            self.add_candiates(candidate.next_states())
-        self.add_processed(candidate)
+    def process_candidate(self, candidates):
+        new_candidates = []
+        processed = []
+        for candidate in candidates:
+            if not candidate.is_final():
+                new_candidates += list(candidate.next_states())
+            processed.append(candidate)
 
-    def candidates(self):
+        self.add_candiates(new_candidates)
+        self.add_processed(processed)
+
+    def candidate_lists(self):
         while True:
             try:
-                f = urllib2.urlopen(self.url + '/candidates')
-                candidate = decode(f.read())
+                f = urllib2.urlopen(self.url + '/candidates?batch=100')
+                candidates = decode(f.read())
                 f.close()
             except socket.error:
                 pass
 
-            if not candidate: raise StopIteration
-            yield candidate
+            if not candidates: raise StopIteration
+            yield candidates
 
     def add_processed(self, processed):
         try:
@@ -38,7 +44,7 @@ class SearchClient(object):
             pass
 
     def add_candiates(self, next_candidates):
-        data = encode(list(next_candidates))
+        data = encode(next_candidates)
         try:
             f = urllib2.urlopen(self.url + '/candidates', data=data)
             f.close()
