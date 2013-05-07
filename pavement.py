@@ -39,3 +39,7 @@ def server():
 @task
 def client():
     sh('python -m agiletreasurehuntgame.search_client')
+
+@task
+def run():
+    sh('python -m agiletreasurehuntgame.othello')

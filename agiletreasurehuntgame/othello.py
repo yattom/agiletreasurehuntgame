@@ -381,12 +381,15 @@ class OthelloCandidate(object):
 
 
 def main():
+    import datetime
+    started = datetime.datetime.now()
     Dumper.INTERVAL = 1000
     search = Search(dump=True)
 #    search = SearchWithGenerator()
     start = OthelloCandidate(4, Board(width=3, height=3))
     search.add_candiates(start.next_states())
     bests = search.search_single()
+    print 'elapsed: %s'%(datetime.datetime.now() - started)
     for b in bests:
         print 'score=%d'%(b.score())
         print b.board.dump(history=True)
