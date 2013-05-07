@@ -382,11 +382,18 @@ class OthelloCandidate(object):
 
 def main():
     import datetime
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-d', '--depth', type=int, default=3)
+    parser.add_argument('-s', '--size', type=int, default=3)
+    args = parser.parse_args()
+
     started = datetime.datetime.now()
     Dumper.INTERVAL = 1000
     search = Search(dump=True)
 #    search = SearchWithGenerator()
-    start = OthelloCandidate(4, Board(width=3, height=3))
+    start = OthelloCandidate(args.depth, Board(width=args.size, height=args.size))
     search.add_candiates(start.next_states())
     bests = search.search_single()
     print 'elapsed: %s'%(datetime.datetime.now() - started)

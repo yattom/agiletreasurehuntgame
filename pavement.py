@@ -32,14 +32,25 @@ def test(options):
     files = path('agiletreasurehuntgame').walk('*.py')
     sh('nosetests %s %s'%(' '.join(opts), ' '.join(files)))
 
+RUNNING_OPTS = [
+    ('depth=', 'd', 'how many pieces to search'),
+    ('size=', 's', 'length of a side of the board'),
+]
+
 @task
-def server():
-    sh('python -m agiletreasurehuntgame.search_server')
+@cmdopts(RUNNING_OPTS)
+def server(options):
+    depth = options.server.depth if 'depth' in options.server else 3
+    size = options.server.size if 'size' in options.server else 3
+    sh('python -m agiletreasurehuntgame.search_server -d %s -s %s'%(depth, size))
 
 @task
 def client():
     sh('python -m agiletreasurehuntgame.search_client')
 
 @task
+@cmdopts(RUNNING_OPTS)
 def run():
-    sh('python -m agiletreasurehuntgame.othello')
+    depth = options.run.depth if 'depth' in options.run else 3
+    size = options.run.size if 'size' in options.run else 3
+    sh('python -m agiletreasurehuntgame.othello -d %s -s %s'%(depth, size))

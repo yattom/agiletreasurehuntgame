@@ -72,9 +72,16 @@ class SearchServer(object):
 
 
 def main():
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-d', '--depth', type=int, default=3)
+    parser.add_argument('-s', '--size', type=int, default=3)
+    args = parser.parse_args()
+
     import othello, search
     search = search.Search(dump=True)
-    start = othello.OthelloCandidate(4, othello.Board(width=3, height=3))
+    start = othello.OthelloCandidate(args.depth, othello.Board(width=args.size, height=args.size))
     search.add_candiates(start.next_states())
     search.reset_best()
     search.start_dumper()
