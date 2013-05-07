@@ -1,6 +1,7 @@
 from paver.easy import *
 from paver.setuputils import setup
 
+import os
 import re
 
 setup(
@@ -45,8 +46,20 @@ def server(options):
     sh('python -m agiletreasurehuntgame.search_server -d %s -s %s'%(depth, size))
 
 @task
-def client():
-    sh('python -m agiletreasurehuntgame.search_client')
+@cmdopts([
+    ('concurrency=', 'c', 'how many client process to start')
+])
+def client(options):
+    concurrency = options.client.concurrency if 'concurrency' in options.client else 4
+
+    def run_client():
+        if os.name == 'nt':
+            os.system('python -m agiletreasurehuntgame.search_client')
+        else:
+            sh('python -m agiletreasurehuntgame.search_clien')
+    import threading
+    for i in range(concurrency):
+        threading.Thread(target=run_client).start()
 
 @task
 @cmdopts(RUNNING_OPTS)
