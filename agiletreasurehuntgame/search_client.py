@@ -30,11 +30,11 @@ class SearchClient(object):
                 f = urllib2.urlopen(self.url + '/candidates?batch=100')
                 candidates = decode(f.read())
                 f.close()
+                if not candidates: raise StopIteration
+                yield candidates
             except socket.error:
                 pass
 
-            if not candidates: raise StopIteration
-            yield candidates
 
     def add_processed(self, processed):
         try:
