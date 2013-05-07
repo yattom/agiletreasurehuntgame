@@ -86,7 +86,7 @@ def main():
     search.reset_best()
     search.start_dumper()
 
-    start = othello.OthelloCandidate(args.depth, othello.Board(width=args.size, height=args.size))
+    start = othello.OthelloCandidate(args.depth, othello.Board(width=args.width, height=args.height))
     search.add_candiates(start.next_states())
     for candidate in search.candidates():
         search.process_candidate(candidate)

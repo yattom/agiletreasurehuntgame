@@ -387,7 +387,13 @@ def parse_args():
     parser.add_argument('-s', '--size', type=int, default=3)
     parser.add_argument('-b', '--batchsize', type=int, default=2)
     parser.add_argument('-c', '--concurrency', type=int, default=1)
-    return parser.parse_args()
+    parser.add_argument('--width', type=int)
+    parser.add_argument('--height', type=int)
+
+    args = parser.parse_args()
+    if not args.width: args.width = args.size
+    if not args.height: args.height = args.size
+    return args
 
 
 def main():
@@ -398,7 +404,7 @@ def main():
     Dumper.INTERVAL = 1000
     search = Search(dump=True)
 #    search = SearchWithGenerator()
-    start = OthelloCandidate(args.depth, Board(width=args.size, height=args.size))
+    start = OthelloCandidate(args.depth, Board(width=args.width, height=args.height))
     search.add_candiates(start.next_states())
     bests = search.search_single()
     print 'elapsed: %s'%(datetime.datetime.now() - started)
