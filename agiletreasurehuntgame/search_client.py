@@ -36,7 +36,7 @@ class SearchClient(object):
 
 
 def main():
-    client = SearchClient('http://localhost:8080')
+    client = SearchClient('http://127.0.0.1:8080')
     client.search()
 
 if __name__=='__main__':
