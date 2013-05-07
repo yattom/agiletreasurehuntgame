@@ -53,12 +53,12 @@ class Search(object):
     >>> bests = search.search_single()
     >>> for b in bests:
     ...    print b.board.dump(history=True)
-    ('...',
-     '...',
-     'BBB')(2, 1, 1)(2, 2, 2)(2, 0, 2)
     ('.B.',
      '.B.',
      '.B.')(1, 1, 1)(2, 1, 2)(0, 1, 2)
+    ('...',
+     '...',
+     'BBB')(2, 1, 1)(2, 2, 2)(2, 0, 2)
     ('B..',
      '.B.',
      '..B')(1, 1, 1)(2, 2, 2)(0, 0, 2)
@@ -109,7 +109,10 @@ class Search(object):
 
     def add_candiates(self, candidates):
         for c in candidates:
-            self.candidates_list.append(c)
+            if c.is_final():
+                self.add_processed(c)
+            else:
+                self.candidates_list.append(c)
 
     def is_processed(self, candidate):
         if not candidate._normalized_id in self._processed:
