@@ -39,20 +39,17 @@ RUNNING_OPTS = [
 ]
 
 @task
-@cmdopts(RUNNING_OPTS)
+@cmdopts(RUNNING_OPTS + [
+    ('concurrency=', 'c', 'how many client process to start')
+])
 def server(options):
     depth = options.server.depth if 'depth' in options.server else 3
     size = options.server.size if 'size' in options.server else 3
-    sh('python -m agiletreasurehuntgame.search_server -d %s -s %s'%(depth, size))
-
-@task
-@cmdopts([
-    ('concurrency=', 'c', 'how many client process to start')
-])
-def client(options):
-    concurrency = int(options.client.concurrency) if 'concurrency' in options.client else 4
+    concurrency = int(options.server.concurrency) if 'concurrency' in options.server else 4
 
     def run_client():
+        import time
+        time.sleep(2)
         if os.name == 'nt':
             os.system('python -m agiletreasurehuntgame.search_client')
         else:
@@ -60,6 +57,7 @@ def client(options):
     import threading
     for i in range(concurrency):
         threading.Thread(target=run_client).start()
+    sh('python -m agiletreasurehuntgame.search_server -d %s -s %s'%(depth, size))
 
 @task
 @cmdopts(RUNNING_OPTS)
