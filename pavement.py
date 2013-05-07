@@ -50,7 +50,7 @@ def server(options):
     ('concurrency=', 'c', 'how many client process to start')
 ])
 def client(options):
-    concurrency = options.client.concurrency if 'concurrency' in options.client else 4
+    concurrency = int(options.client.concurrency) if 'concurrency' in options.client else 4
 
     def run_client():
         if os.name == 'nt':
