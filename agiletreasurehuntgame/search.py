@@ -136,36 +136,23 @@ class Search(object):
 
 
 class Candidate(object):
-    def distance_sum(self):
-        return 0
-
     def normalized_id(self):
-        return str(hash(self))
+        raise StandardError('must be implemented')
 
     def is_final(self):
-        return len(self.board.place_history) >= self.place_limit
+        raise StandardError('must be implemented')
 
     def score(self):
-        return self.board.flip_count['WtoB']
+        raise StandardError('must be implemented')
 
     def next_states(self):
-        for r in range(self.board.height):
-            for c in range(self.board.width):
-                if self.board.get(r, c) != Board.EMPTY: continue
-                for color in [Board.WHITE, Board.BLACK]:
-                    next_board = Board(self.board.state())
-                    next_board.place(r, c, color)
-                    yield OthelloCandidate(self.place_limit, next_board)
-
+        raise StandardError('must be implemented')
 
     def dump(self, **argv):
-        return self.board.dump(**argv)
+        raise StandardError('must be implemented')
 
     def __hash__(self):
-        return hash(self._normalized_id)
-
-    def __cmp__(self, other):
-        return -cmp(self._distance_sum, other._distance_sum)
+        return hash(self.normalized_id())
 
 
 class SearchWithGenerator(Search):
