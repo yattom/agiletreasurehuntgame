@@ -319,10 +319,11 @@ class OthelloCandidate(object):
     def __init__(self, place_limit, board):
         self.place_limit = place_limit
         self.board = board
-        self._distance_sum = self.distance_sum()
         self._normalized_id = self.normalized_id()
 
     def distance_sum(self):
+        if '_distance_sum' in dir(self):
+            return self._distance_sum
         pieces = [(r, c) for r in range(self.board.height) for c in range(self.board.width) if self.board.get(r, c) != Board.EMPTY]
         if not pieces: return 0
         sum = 0
@@ -330,6 +331,7 @@ class OthelloCandidate(object):
             distances = [abs(row - r) + abs(col - c) for (r, c) in pieces if not (row == r and col == c)]
             sum += min(distances) if distances else 0
         #return (sum + 0.0) / (len(pieces) ** 2)
+        self._distance_sum = sum
         return sum
 
     def normalized_id(self):
@@ -376,7 +378,7 @@ class OthelloCandidate(object):
         return hash(self._normalized_id)
 
     def __cmp__(self, other):
-        return -cmp(self._distance_sum, other._distance_sum)
+        return -cmp(self.distance_sum(), other.distance_sum())
 
 
 def parse_args():
