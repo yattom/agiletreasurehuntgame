@@ -63,10 +63,12 @@ class Search(object):
      '.B.',
      '..B')(1, 1, 1)(2, 2, 2)(0, 0, 2)
     '''
-    def __init__(self, dump=False):
-        self.candidates_list = bigheap.BigHeap(max_threshold=30000, min_threshold=10000)
+    def __init__(self, dump=False, flavor=None):
+        if not flavor:
+            flavor = ComparableCandidatesFlavor
+        self.candidates_list = flavor.create_candidates_list()
         self.dump = dump
-        self._processed = {}
+        self._processed = flavor.create_processed()
 
     def start_dumper(self):
         if self.dump:
@@ -180,3 +182,14 @@ class SearchWithGenerator(Search):
         self.candidates_generator_list.append(candidates)
 
 
+class ComparableCandidatesFlavor(object):
+    @staticmethod
+    def create_candidates_list():
+        return bigheap.BigHeap(max_threshold=30000, min_threshold=10000)
+
+    @staticmethod
+    def create_processed():
+        '''
+        create dict object which maps normalize_id to score (int)
+        '''
+        return {}
