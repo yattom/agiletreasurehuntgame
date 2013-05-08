@@ -193,3 +193,31 @@ class ComparableCandidatesFlavor(object):
         create dict object which maps normalize_id to score (int)
         '''
         return {}
+
+class PlainFlavor(object):
+    pass
+
+def create_processed_backed_by_memecached():
+    class Processed(object):
+        def __init__(self, mc):
+            self.mc = mc
+
+        def __len__(self):
+            pass
+
+        def __contains__(self, key):
+            return mc.get(key) != None
+
+        def __getitem__(self, key):
+            return mc.get(key)
+
+        def __setitem__(self, key, value):
+            return mc.set(key, value)
+
+    import memcache
+    mc = memcache.Client(['127.0.0.1:11211'], debug=0)
+    return Processed(mc)
+
+FlavorForMemachedServer = PlainFlavor()
+FlavorForMemachedServer.create_candidates_list = ComparableCandidatesFlavor.create_candidates_list
+FlavorForMemachedServer.create_processed = create_processed_backed_by_memecached
