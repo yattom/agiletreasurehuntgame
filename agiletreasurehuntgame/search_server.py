@@ -77,23 +77,3 @@ class SearchServer(object):
         app.run()
 
 
-def main():
-    import othello, search
-    args = othello.parse_args()
-    import sys
-    sys.argv[1] = '' # bypass ip arg in web/wsgi.py
-    search = search.Search(dump=True)
-    search.reset_best()
-    search.start_dumper()
-
-    start = othello.OthelloCandidate(args.depth, othello.Board(width=args.width, height=args.height))
-    search.add_candiates(start.next_states())
-    for candidate in search.candidates():
-        search.process_candidate(candidate)
-        if len(search.candidates_list) > args.concurrency * args.batchsize: break
-
-    SearchServer.run(search)
-
-
-if __name__=='__main__':
-    main()

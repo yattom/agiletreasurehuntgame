@@ -383,6 +383,7 @@ def parse_args():
     import argparse
 
     parser = argparse.ArgumentParser()
+    parser.add_argument('-S', '--server', type=bool, default=False)
     parser.add_argument('-d', '--depth', type=int, default=3)
     parser.add_argument('-s', '--size', type=int, default=3)
     parser.add_argument('-b', '--batchsize', type=int, default=2)
@@ -396,9 +397,24 @@ def parse_args():
     return args
 
 
-def main():
-    args = parse_args()
+def run_server(args):
+    import sys
+    sys.argv[1] = '' # bypass ip arg in web/wsgi.py
+    search = Search(dump=True)
+    search.reset_best()
+    search.start_dumper()
 
+    start = OthelloCandidate(args.depth, Board(width=args.width, height=args.height))
+    search.add_candiates(start.next_states())
+    for candidate in search.candidates():
+        search.process_candidate(candidate)
+        if len(search.candidates_list) > args.concurrency * args.batchsize: break
+
+    import search_server
+    search_server.SearchServer.run(search)
+
+
+def run_single(args):
     import datetime
     started = datetime.datetime.now()
     Dumper.INTERVAL = 1000
@@ -412,6 +428,13 @@ def main():
         print 'score=%d'%(b.score())
         print b.board.dump(history=True)
 
+
+def main():
+    args = parse_args()
+    if args.server:
+        run_server(args)
+    else:
+        run_single(args)
 
 if __name__=='__main__':
     main()

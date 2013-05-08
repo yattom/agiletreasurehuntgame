@@ -59,7 +59,7 @@ def server(options):
     import threading
     for i in range(concurrency):
         threading.Thread(target=run_client).start()
-    sh('python -m agiletreasurehuntgame.search_server -d %s -s %s -b %s -c %s'%(depth, size, batchsize, concurrency))
+    sh('python -m agiletreasurehuntgame.othello -S True -d %s -s %s -b %s -c %s'%(depth, size, batchsize, concurrency))
 
 @task
 @cmdopts(RUNNING_OPTS)
