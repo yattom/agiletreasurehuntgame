@@ -69,6 +69,8 @@ class Search(object):
         self.candidates_list = flavor.create_candidates_list()
         self.dump = dump
         self._processed = flavor.create_processed()
+        self.best_score = 0
+        self.bests = flavor.create_bests()
 
     def start_dumper(self):
         if self.dump:
@@ -77,13 +79,8 @@ class Search(object):
             self.dumper = DumbDumper()
         self.dumper.start()
 
-    def reset_best(self):
-        self.best_score = 0
-        self.bests = []
-
     def search_single(self):
         self.start_dumper()
-        self.reset_best()
         for candidate in self.candidates():
             self.process_candidate(candidate)
         return self.bests
@@ -127,7 +124,7 @@ class Search(object):
         if candidate.is_final():
             if candidate.score() > self.best_score:
                 self.best_score = candidate.score()
-                self.bests = []
+                self.bests[:] = []
             if candidate.score() == self.best_score:
                 self.bests.append(candidate)
                 self.dumper.best(self.best_score, candidate)
@@ -193,3 +190,43 @@ class ComparableCandidatesFlavor(object):
         create dict object which maps normalize_id to score (int)
         '''
         return {}
+
+    @staticmethod
+    def create_bests():
+        return []
+
+import multiprocessing
+
+class CandidatesByQueue(object):
+    def __init__(self):
+        self.queue = multiprocessing.Queue()
+    def pop(self):
+        return self.queue.get()
+    def __len__(self):
+        return self.queue.qsize()
+    def append(self, value):
+        self.queue.put(value)
+
+class MultiprocessingFlavor(object):
+    '''
+    Does not compare candidates; candidates are simply queued and shared.
+    Processed are shared by multiprocessing.Array.
+    '''
+    def __init__(self):
+        self._candidates_list = CandidatesByQueue()
+        self.manager = multiprocessing.Manager()
+        self._processed = self.manager.dict()
+        self._bests = self.manager.list()
+
+    def create_candidates_list(self):
+        return self._candidates_list
+
+    def create_processed(self):
+        '''
+        create dict object which maps normalize_id to score (int)
+        '''
+        return self._processed
+
+    def create_bests(self):
+        return self._bests
+

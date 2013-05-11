@@ -2,9 +2,8 @@
 
 import datetime
 import bisect
-import bigheap
 
-from search import Search, Dumper
+from agiletreasurehuntgame.search import Search, Dumper, MultiprocessingFlavor
 
 class Board(object):
     '''
@@ -385,7 +384,7 @@ def parse_args():
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-S', '--server', type=bool, default=False)
+    parser.add_argument('-m', '--mode', type=str, default='single')
     parser.add_argument('-d', '--depth', type=int, default=3)
     parser.add_argument('-s', '--size', type=int, default=3)
     parser.add_argument('-b', '--batchsize', type=int, default=2)
@@ -403,7 +402,6 @@ def run_server(args):
     import sys
     sys.argv[1] = '' # bypass ip arg in web/wsgi.py
     search = Search(dump=True)
-    search.reset_best()
     search.start_dumper()
 
     start = OthelloCandidate(args.depth, Board(width=args.width, height=args.height))
@@ -414,6 +412,33 @@ def run_server(args):
 
     import search_server
     search_server.SearchServer.run(search)
+
+
+def run_by_multiprocessing(args):
+    import datetime
+    started = datetime.datetime.now()
+    import multiprocessing
+    flavor = MultiprocessingFlavor()
+    search = Search(dump=False, flavor=flavor)
+    search.start_dumper()
+
+    start = OthelloCandidate(args.depth, Board(width=args.width, height=args.height))
+    search.add_candiates(start.next_states())
+    for candidate in search.candidates():
+        search.process_candidate(candidate)
+        if len(search.candidates_list) > args.concurrency * args.batchsize: break
+
+    processes = []
+    for i in range(args.concurrency):
+        p = multiprocessing.Process(target=search.search_single)
+        p.start()
+        processes.append(p)
+
+    [p.join() for p in processes]
+    print 'Finished! elapsed: %s'%(datetime.datetime.now() - started)
+    for b in search.bests:
+        print 'score=%d'%(b.score())
+        print b.board.dump(history=True)
 
 
 def run_single(args):
@@ -433,8 +458,12 @@ def run_single(args):
 
 def main():
     args = parse_args()
-    if args.server:
+    if args.mode == 'http':
         run_server(args)
+    elif args.mode == 'multiprocessing':
+        run_by_multiprocessing(args)
+    elif args.mode == 'single':
+        run_single(args)
     else:
         run_single(args)
 
