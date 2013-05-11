@@ -2,7 +2,8 @@
 
 import datetime
 import bisect
-import bigheap
+
+from agiletreasurehuntgame.search import Search, Dumper, MultiprocessingFlavor
 
 class Board(object):
     '''
@@ -317,10 +318,11 @@ class OthelloCandidate(object):
     def __init__(self, place_limit, board):
         self.place_limit = place_limit
         self.board = board
-        self._distance_sum = self.distance_sum()
         self._normalized_id = self.normalized_id()
 
     def distance_sum(self):
+        if '_distance_sum' in dir(self):
+            return self._distance_sum
         pieces = [(r, c) for r in range(self.board.height) for c in range(self.board.width) if self.board.get(r, c) != Board.EMPTY]
         if not pieces: return 0
         sum = 0
@@ -328,6 +330,7 @@ class OthelloCandidate(object):
             distances = [abs(row - r) + abs(col - c) for (r, c) in pieces if not (row == r and col == c)]
             sum += min(distances) if distances else 0
         #return (sum + 0.0) / (len(pieces) ** 2)
+        self._distance_sum = sum
         return sum
 
     def normalized_id(self):
@@ -367,152 +370,102 @@ class OthelloCandidate(object):
                     yield OthelloCandidate(self.place_limit, next_board)
 
 
+    def dump(self, **argv):
+        return self.board.dump(**argv)
+
     def __hash__(self):
         return hash(self._normalized_id)
 
     def __cmp__(self, other):
-        return -cmp(self._distance_sum, other._distance_sum)
+        return -cmp(self.distance_sum(), other.distance_sum())
 
 
-class Dumper(object):
-    INTERVAL = 500
-    def __init__(self, search):
-        self.search = search
+def parse_args():
+    import argparse
 
-    def start(self):
-        self.started = datetime.datetime.now()
-        self.lap = datetime.datetime.now()
-        self.loop_count = 0
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-m', '--mode', type=str, default='single')
+    parser.add_argument('-d', '--depth', type=int, default=3)
+    parser.add_argument('-s', '--size', type=int, default=3)
+    parser.add_argument('-b', '--batchsize', type=int, default=2)
+    parser.add_argument('-c', '--concurrency', type=int, default=1)
+    parser.add_argument('--width', type=int)
+    parser.add_argument('--height', type=int)
 
-    def cycle(self, candidate):
-        self.loop_count += 1
-        if self.loop_count % Dumper.INTERVAL == 0:
-            now = datetime.datetime.now()
-            print "#%05d elapsed:%s, candidates:%d, processed(normalized):%d, avg:%s, lap avg:%s"%(self.loop_count, now  - self.started, len(self.search.candidates_list), len(self.search._processed), (now - self.started) / self.loop_count, (now - self.lap) / Dumper.INTERVAL)
-            self.lap = now
-            print candidate.board.dump()
-
-    def best(self, best_score, candidate):
-        print 'current best(score=%d)'%(best_score)
-        print candidate.board.dump(history=True)
-
-class DumbDumper(object):
-    def start(self):
-        pass
-
-    def cycle(self, candidate):
-        pass
-
-    def best(self, best_score, candidate):
-        pass
-
-class Search(object):
-    '''
-    >>> search = Search()
-    >>> start = OthelloCandidate(3, Board(width=3, height=3))
-    >>> search.add_candiates(start.next_states())
-    >>> bests = search.search()
-    >>> for b in bests:
-    ...    print b.board.dump()
-    ('...',
-     '...',
-     'BBB')
-    ('.B.',
-     '.B.',
-     '.B.')
-    ('B..',
-     '.B.',
-     '..B')
-    '''
-    def __init__(self, dump=False):
-        self.candidates_list = bigheap.BigHeap(max_threshold=30000, min_threshold=10000)
-        self.dump = dump
-        self._processed = {}
-
-    def search(self):
-        if self.dump:
-            dumper = Dumper(self)
-        else:
-            dumper = DumbDumper()
-        dumper.start()
-        best_score = 0
-        bests = []
-        for candidate in self.candidates():
-            dumper.cycle(candidate)
-            if candidate.is_final():
-                if candidate.score() > best_score:
-                    best_score = candidate.score()
-                    bests = []
-                if candidate.score() == best_score:
-                    bests.append(candidate)
-                    dumper.best(best_score, candidate)
-            else:
-                self.add_candiates(candidate.next_states())
-            self.add_processed(candidate)
-
-        return bests
-
-    def candidates(self):
-        while True:
-            if len(self.candidates_list) == 0: raise StopIteration
-            # making it pop(0) slows down the operation dramatically
-            candidate = self.candidates_list.pop()
-            if not self.is_processed(candidate): yield candidate
-
-    def add_candiates(self, candidates):
-        for c in candidates:
-            self.candidates_list.append(c)
-
-    def is_processed(self, candidate):
-        if not candidate._normalized_id in self._processed:
-            return False
-        if self._processed[candidate._normalized_id] < candidate.score():
-            return False
-        return True
-
-    def add_processed(self, candidate):
-        if not candidate._normalized_id in self._processed:
-            self._processed[candidate._normalized_id] = candidate.score()
-        elif candidate.score() > self._processed[candidate._normalized_id]:
-            self._processed[candidate._normalized_id] = candidate.score()
+    args = parser.parse_args()
+    if not args.width: args.width = args.size
+    if not args.height: args.height = args.size
+    return args
 
 
-class SearchWithGenerator(Search):
-    '''
-    This version uses generator to conserve memory.
-    self.candidate_list contains generators of candidates.
-    ie. self.candidat_list == [<generator>, <generator>, ...]
-    where each generator yields a series of candidates.
+def run_server(args):
+    import sys
+    sys.argv[1] = '' # bypass ip arg in web/wsgi.py
+    search = Search(dump=True)
+    search.start_dumper()
 
-    This is about 10 times slow and it's unable to sort candidates with
-    evaluation funcations.  Practically useless.
-    '''
-    def __init__(self):
-        self.candidates_generator_list = []
+    start = OthelloCandidate(args.depth, Board(width=args.width, height=args.height))
+    search.add_candiates(start.next_states())
+    for candidate in search.candidates():
+        search.process_candidate(candidate)
+        if len(search.candidates_list) > args.concurrency * args.batchsize: break
 
-    def candidates(self):
-        while True:
-            if len(self.candidates_generator_list) == 0: raise StopIteration
-            candidates_generator = self.candidates_generator_list.pop(-1)
-            for c in candidates_generator:
-                if not self.is_processed(c):
-                    yield c
-
-    def add_candiates(self, candidates):
-        self.candidates_generator_list.append(candidates)
+    import search_server
+    search_server.SearchServer.run(search)
 
 
-def main():
+def run_by_multiprocessing(args):
+    import datetime
+    started = datetime.datetime.now()
+    import multiprocessing
+    flavor = MultiprocessingFlavor()
+    search = Search(dump=False, flavor=flavor)
+    search.start_dumper()
+
+    start = OthelloCandidate(args.depth, Board(width=args.width, height=args.height))
+    search.add_candiates(start.next_states())
+    for candidate in search.candidates():
+        search.process_candidate(candidate)
+        if len(search.candidates_list) > args.concurrency * args.batchsize: break
+
+    processes = []
+    for i in range(args.concurrency):
+        p = multiprocessing.Process(target=search.search_single)
+        p.start()
+        processes.append(p)
+
+    [p.join() for p in processes]
+    print 'Finished! elapsed: %s'%(datetime.datetime.now() - started)
+    for b in search.bests:
+        print 'score=%d'%(b.score())
+        print b.board.dump(history=True)
+
+
+def run_single(args):
+    import datetime
+    started = datetime.datetime.now()
     Dumper.INTERVAL = 1000
     search = Search(dump=True)
 #    search = SearchWithGenerator()
-    start = OthelloCandidate(6, Board(width=5, height=5))
+    start = OthelloCandidate(args.depth, Board(width=args.width, height=args.height))
     search.add_candiates(start.next_states())
-    bests = search.search()
+    bests = search.search_single()
+    print 'elapsed: %s'%(datetime.datetime.now() - started)
     for b in bests:
         print 'score=%d'%(b.score())
         print b.board.dump(history=True)
 
+
+def main():
+    args = parse_args()
+    if args.mode == 'http':
+        run_server(args)
+    elif args.mode == 'multiprocessing':
+        run_by_multiprocessing(args)
+    elif args.mode == 'single':
+        run_single(args)
+    else:
+        run_single(args)
 
 if __name__=='__main__':
     main()
