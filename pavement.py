@@ -67,3 +67,13 @@ def run():
     depth = options.run.depth if 'depth' in options.run else 3
     size = options.run.size if 'size' in options.run else 3
     sh('python -m agiletreasurehuntgame.othello -d %s -s %s'%(depth, size))
+
+@task
+@cmdopts(RUNNING_OPTS + [
+    ('concurrency=', 'c', 'how many process to start'),
+])
+def multi():
+    depth = options.multi.depth if 'depth' in options.multi else 3
+    size = options.multi.size if 'size' in options.multi else 3
+    concurrency = int(options.multi.concurrency) if 'concurrency' in options.multi else 4
+    sh('python -m agiletreasurehuntgame.othello -d %s -s %s -m multiprocessing -c %s'%(depth, size, concurrency))
