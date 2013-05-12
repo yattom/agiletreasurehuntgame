@@ -3,8 +3,8 @@
 import bigheap
 import datetime
 
-class Dumper(object):
-    INTERVAL = 500
+class StdoutDumper(object):
+    INTERVAL = 1000
     def __init__(self, search):
         self.search = search
 
@@ -15,9 +15,9 @@ class Dumper(object):
 
     def cycle(self, candidate):
         self.loop_count += 1
-        if self.loop_count % Dumper.INTERVAL == 0:
+        if self.loop_count % StdoutDumper.INTERVAL == 0:
             now = datetime.datetime.now()
-            print "#%05d elapsed:%s, candidates:%d, processed(normalized):%d, avg:%s, lap avg:%s"%(self.loop_count, now  - self.started, len(self.search.candidates_list), len(self.search._processed), (now - self.started) / self.loop_count, (now - self.lap) / Dumper.INTERVAL)
+            print "#%05d elapsed:%s, candidates:%d, processed(normalized):%d, avg:%s, lap avg:%s"%(self.loop_count, now  - self.started, len(self.search.candidates_list), len(self.search._processed), (now - self.started) / self.loop_count, (now - self.lap) / StdoutDumper.INTERVAL)
             self.lap = now
             print candidate.dump()
 
@@ -31,7 +31,12 @@ class Dumper(object):
         for b in bests:
             print b.dump(history=True)
 
-class DumbDumper(object):
+    def log_error(self):
+        import traceback
+        traceback.print_exc()
+        
+
+class SilentDumper(object):
     def start(self):
         pass
 
@@ -43,6 +48,14 @@ class DumbDumper(object):
 
     def final_best(self, bests):
         pass
+
+    def log_error(self):
+        import os, traceback
+        f = open('error-%s.log'%(os.getpid()), 'w+')
+        traceback.print_exc(file=f)
+        f.flush()
+        f.close()
+
 
 class Search(object):
     '''
@@ -73,16 +86,19 @@ class Search(object):
 
     def start_dumper(self):
         if self.dump:
-            self.dumper = Dumper(self)
+            self.dumper = StdoutDumper(self)
         else:
-            self.dumper = DumbDumper()
+            self.dumper = SilentDumper()
         self.dumper.start()
 
     def search_single(self):
-        self.start_dumper()
-        for candidate in self.candidates():
-            self.process_candidate(candidate)
-        return self.bests
+        try:
+            self.start_dumper()
+            for candidate in self.candidates():
+                self.process_candidate(candidate)
+            return self.bests
+        except:
+            self.dumper.log_error()
 
     def process_candidate(self, candidate):
         self.dumper.cycle(candidate)

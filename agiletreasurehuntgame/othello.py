@@ -3,7 +3,7 @@
 import datetime
 import bisect
 
-from agiletreasurehuntgame.search import Search, Dumper, MultiprocessingFlavor
+from agiletreasurehuntgame.search import Search, MultiprocessingFlavor
 
 class Board(object):
     '''
@@ -444,7 +444,6 @@ def run_by_multiprocessing(args):
 def run_single(args):
     import datetime
     started = datetime.datetime.now()
-    Dumper.INTERVAL = 1000
     search = Search(dump=True)
 #    search = SearchWithGenerator()
     start = OthelloCandidate(args.depth, Board(width=args.width, height=args.height))
