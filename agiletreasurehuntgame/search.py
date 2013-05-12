@@ -69,7 +69,6 @@ class Search(object):
         self.candidates_list = flavor.create_candidates_list()
         self.dump = dump
         self._processed = flavor.create_processed()
-        self.best_score = 0
         self.bests = flavor.create_bests()
 
     def start_dumper(self):
@@ -122,17 +121,23 @@ class Search(object):
 
     def add_processed(self, candidate):
         if candidate.is_final():
-            if candidate.score() > self.best_score:
-                self.best_score = candidate.score()
-                self.bests[:] = []
-            if candidate.score() == self.best_score:
+            if candidate.score() > self.best_score():
+                self.bests[:] = [candidate]
+            elif candidate.score() == self.best_score():
                 self.bests.append(candidate)
-                self.dumper.best(self.best_score, candidate)
+                self.dumper.best(self.best_score(), candidate)
         if not candidate._normalized_id in self._processed:
             self._processed[candidate._normalized_id] = candidate.score()
         elif candidate.score() > self._processed[candidate._normalized_id]:
             self._processed[candidate._normalized_id] = candidate.score()
 
+    def best_score(self):
+        if not self.bests: return 0
+        return max((c.score() for c in self.bests))
+
+    def final_bests(self):
+        best_score = self.best_score()
+        return (c for c in self.bests if c.score() == best_score)
 
 class Candidate(object):
     def normalized_id(self):

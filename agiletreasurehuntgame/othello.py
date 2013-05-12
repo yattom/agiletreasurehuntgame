@@ -436,7 +436,7 @@ def run_by_multiprocessing(args):
 
     [p.join() for p in processes]
     print 'Finished! elapsed: %s'%(datetime.datetime.now() - started)
-    for b in search.bests:
+    for b in search.final_bests():
         print 'score=%d'%(b.score())
         print b.board.dump(history=True)
 
