@@ -448,9 +448,9 @@ def run_single(args):
 #    search = SearchWithGenerator()
     start = OthelloCandidate(args.depth, Board(width=args.width, height=args.height))
     search.add_candiates(start.next_states())
-    bests = search.search_single()
+    search.search_single()
     print 'elapsed: %s'%(datetime.datetime.now() - started)
-    for b in bests:
+    for b in search.final_bests:
         print 'score=%d'%(b.score())
         print b.board.dump(history=True)
 

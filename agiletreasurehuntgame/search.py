@@ -64,7 +64,7 @@ class Search(object):
     >>> start = OthelloCandidate(3, Board(width=3, height=3))
     >>> search.add_candiates(start.next_states())
     >>> bests = search.search_single()
-    >>> for b in bests:
+    >>> for b in search.final_bests():
     ...    print b.board.dump(history=True)
     ('.B.',
      '.B.',
@@ -82,6 +82,7 @@ class Search(object):
         self.candidates_list = flavor.create_candidates_list()
         self.dump = dump
         self._processed = flavor.create_processed()
+        self.best_score = 0
         self.bests = flavor.create_bests()
 
     def start_dumper(self):
@@ -137,23 +138,18 @@ class Search(object):
 
     def add_processed(self, candidate):
         if candidate.is_final():
-            if candidate.score() > self.best_score():
-                self.bests[:] = [candidate]
-            elif candidate.score() == self.best_score():
+            if candidate.score() >= self.best_score:
                 self.bests.append(candidate)
-                self.dumper.best(self.best_score(), candidate)
+                self.dumper.best(self.best_score, candidate)
         if not candidate._normalized_id in self._processed:
             self._processed[candidate._normalized_id] = candidate.score()
         elif candidate.score() > self._processed[candidate._normalized_id]:
             self._processed[candidate._normalized_id] = candidate.score()
 
-    def best_score(self):
-        if not self.bests: return 0
-        return max((c.score() for c in self.bests))
-
     def final_bests(self):
-        best_score = self.best_score()
-        return (c for c in self.bests if c.score() == best_score)
+        best_score = max(c.score() for c in self.bests)
+        bests = {c.normalized_id():c for c in self.bests if c.score() == best_score}
+        return bests.values()
 
 class Candidate(object):
     def normalized_id(self):
