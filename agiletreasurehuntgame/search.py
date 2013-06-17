@@ -66,15 +66,15 @@ class Search(object):
     >>> bests = search.search_single()
     >>> for b in search.final_bests():
     ...    print b.board.dump(history=True)
+    ('B..',
+     '.B.',
+     '..B')(1, 1, 1)(2, 2, 2)(0, 0, 2)
     ('.B.',
      '.B.',
      '.B.')(1, 1, 1)(2, 1, 2)(0, 1, 2)
     ('...',
      '...',
      'BBB')(2, 1, 1)(2, 2, 2)(2, 0, 2)
-    ('B..',
-     '.B.',
-     '..B')(1, 1, 1)(2, 2, 2)(0, 0, 2)
     '''
     def __init__(self, dump=False, flavor=None):
         if not flavor:
